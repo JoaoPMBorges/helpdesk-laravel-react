@@ -1,0 +1,37 @@
+# ============================================================
+# .gitignore — Backend Laravel
+# ============================================================
+
+# Dependências do Composer (nunca versionar o vendor)
+/vendor/
+/node_modules/
+
+# ⚠️ CRÍTICO: Arquivo de ambiente com credenciais — NUNCA commitar
+.env
+.env.backup
+.env.production
+.env.staging
+
+# Chave de aplicação e caches
+bootstrap/cache/*.php
+bootstrap/cache/*.json
+
+# Uploads e arquivos gerados
+/public/storage
+/public/hot
+
+# Logs e arquivos temporários
+storage/logs/*.log
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/testing/*
+storage/framework/views/*
+
+# Cobertura de testes e resultados
+.phpunit.result.cache
+coverage/
+.phpunit.cache/
+
+# Composer
+composer.phar
+auth.json

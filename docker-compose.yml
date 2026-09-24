@@ -1,0 +1,87 @@
+version: "3.9"
+
+services:
+
+  # db
+  db:
+    image: mysql:8.0
+    container_name: horizon_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_senha_segura
+      MYSQL_DATABASE: horizon_chamados
+      MYSQL_USER: horizon_user
+      MYSQL_PASSWORD: horizon_senha
+    ports:
+      - "3306:3306"
+    volumes:
+      # Volume nomeado para persistir os dados mesmo após restart
+      - dados_mysql:/var/lib/mysql
+    networks:
+      - rede_horizon
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: horizon_backend
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      # Monta o código do backend dentro do container
+      - ./backend:/var/www/html
+      # Volume isolado para dependências do Composer
+      - dados_vendor:/var/www/html/vendor
+    ports:
+      - "8000:8000"
+    environment:
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: horizon_chamados
+      DB_USERNAME: horizon_user
+      DB_PASSWORD: horizon_senha
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - rede_horizon
+
+  # frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: horizon_frontend
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      # URL do backend dentro da rede Docker (hostname = nome do serviço)
+      VITE_API_URL: http://backend:8000
+    depends_on:
+      - backend
+    networks:
+      - rede_horizon
+
+# Volumes
+volumes:
+  dados_mysql:
+    driver: local
+  dados_vendor:
+    driver: local
+
+# Rede
+networks:
+  rede_horizon:
+    driver: bridge
